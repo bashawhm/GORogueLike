@@ -1,9 +1,27 @@
 package main
 
-import "fmt"
-import "math/rand"
-import "time"
+import (
+	"fmt"
+	"math/rand"
+	"time"
+	"os"
+	"bufio"
+	"strings"
+)
 
+const numMonsters = 2
+
+//Global info
+var d Dungeon
+var laura Actor = Actor{x: 1, y: 1, alive: true, health: 10, attack: 5}
+
+type Actor struct {
+	x int
+	y int
+	alive bool
+	health uint16
+	attack uint16
+}
 
 type Dungeon struct {
 	floor [][]string
@@ -12,6 +30,7 @@ type Dungeon struct {
 }
 
 func (d *Dungeon)printFloor(){
+	d.floor[laura.y][laura.x] = "@"
 	for i := 0; i < d.floorVert; i++ {
 		for j := 0; j < d.floorHoriz; j++ {
 			fmt.Print(d.floor[i][j])
@@ -49,12 +68,73 @@ func (d *Dungeon)genFloor() {
 
 }
 
+func move(input string, thing *Actor){
+	switch input {
+	case "w":
+		if d.floor[(thing.y - 1)][thing.x] == "."{
+			d.floor[thing.y][thing.x] = "."
+			thing.y -= 1
+		} else {
+			fmt.Println("Cannot move up")
+		}
+	case "s":
+		if d.floor[(thing.y + 1)][thing.x] == "."{
+			d.floor[thing.y][thing.x] = "."
+			thing.y += 1
+		} else {
+			fmt.Println("Cannot move down")
+		}
+	case "a":
+		if d.floor[thing.y][(thing.x - 1)] == "."{
+			d.floor[thing.y][thing.x] = "."
+			thing.x -= 1
+		} else {
+			fmt.Println("Cannot move left")
+		}
+	case "d":
+		if d.floor[thing.y][(thing.x + 1)] == "."{
+			d.floor[thing.y][thing.x] = "."
+			thing.x += 1
+		} else {
+			fmt.Println("Cannot move right")
+		}
+	}
+
+}
+
+func parse(input string){
+	input = strings.TrimRight(input, "\n")
+	switch input {
+	case "exit":
+		os.Exit(1)
+	case "w":
+		move(input, &laura)
+	case "s":
+		move(input, &laura)
+	case "a":
+		move(input, &laura)
+	case "d":
+		move(input, &laura)
+	default:
+		fmt.Println("Failed to parse: ", input)
+	}
+
+}
+
 func main(){
+	monsters := make([]Actor, numMonsters)
+	for i := 0; i < numMonsters; i++{
+		monsters[i].alive = true
+		monsters[i].health = 10
+		monsters[i].attack = 2
+	}
 	rand.Seed(time.Now().UnixNano())
-	d := Dungeon{}
+	reader := bufio.NewReader(os.Stdin)
 	d.genFloor()
-	//fmt.Println("Horiz:", d.floorHoriz)
-	//fmt.Println("Vert:", d.floorVert)
-	//fmt.Println(d)
-	d.printFloor()
+	for laura.alive {
+		d.printFloor()
+		text, _ := reader.ReadString('\n')
+		parse(text)
+	}
+
 }
