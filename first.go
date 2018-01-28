@@ -9,6 +9,7 @@ import (
 	"os"
 )
 const MONSTERNUM = 2
+const NEAR = 5
 
 type Actor struct {
 	x int
@@ -33,7 +34,6 @@ var monster [MONSTERNUM]Actor
 
 
 func (d *Dungeon)printFloor(g *gocui.Gui, v *gocui.View){
-	// d.floor[laura.y][laura.x] = "@"
 	for i := 0; i < d.floorVert; i++ {
 		for j := 0; j < d.floorHoriz; j++ {
 			fmt.Fprint(v, d.floor[i][j])
@@ -45,14 +45,14 @@ func (d *Dungeon)printFloor(g *gocui.Gui, v *gocui.View){
 func (d *Dungeon)genFloor() {
 	laura.x = 1
 	laura.y = 1
-	d.floorHoriz = 5 + (rand.Int()%20)
-	d.floorVert = 5 + (rand.Int()%10)
+	d.floorHoriz = 10 + (rand.Int()%20)
+	d.floorVert = 10 + (rand.Int()%10)
 	newFloor := make([][]string, d.floorVert)
 	for i := 0; i < d.floorVert; i++ {
 		newFloor[i] = make([]string, d.floorHoriz)
 	}
 	d.floor = newFloor
-	d.floor[laura.y][laura.x] = "@"
+	d.floor[laura.x][laura.y] = "@"
 	for i := 0; i < d.floorVert; i++ {
          for j := 0; j < d.floorHoriz; j++ {
 			d.floor[i][j] = "."
@@ -135,7 +135,7 @@ func layout(g *gocui.Gui) error {
 		os.Exit(1)
 	}
 	v.Clear()
-	d.floor[laura.y][laura.x] = "@"
+	d.floor[laura.x][laura.y] = "@"
 	MonsterAI()
 	d.printFloor(g, v)
 	fmt.Fprintln(v, "\nGold:", laura.gold)
@@ -143,34 +143,94 @@ func layout(g *gocui.Gui) error {
 	return nil
 }
 
+func isNear(a Actor, b Actor) bool {
+	if (a.y <= b.y) && (a.y + NEAR >= b.y) {
+		if (a.x <= b.x) && (a.x + NEAR >= b.x) || (a.x >= b.x) && (a.x - NEAR <= b.x){
+			return true
+		} 
+	} else if (a.y >= b.y) && (a.y - NEAR <= b.y) {
+		if (a.x <= b.x) && (a.x + NEAR >= b.x) || (a.x >= b.x) && (a.x - NEAR <= b.x) {
+			return true
+		}
+	} else if (a.x <= b.x) && (a.x + NEAR >= b.x) {
+		if (a.y <= b.y) && (a.y + NEAR >= b.y) || (a.y >= b.y) && (a.y - NEAR <= b.y) {
+			return true
+		}
+	} else if (a.x >= b.x) && (a.x - NEAR <= b.x) {
+		if (a.y <= b.y) && (a.y + NEAR >= b.y) || (a.y >= b.y) && (a.y - NEAR <= b.y) {
+			return true
+		}
+	}
+	return false
+}
+
 func MonsterAI(){
 	for i := 0; i < MONSTERNUM; i++ {
-		if laura.y > monster[i].x {
+		if isNear(laura, monster[i]) {
+			if laura.x > monster[i].x {
+				if d.floor[monster[i].x+1][monster[i].y] == "." {
+					d.floor[monster[i].x][monster[i].y] = "."
+					monster[i].x++
+					d.floor[monster[i].x][monster[i].y] = "M"
+				}
+			} else {
+				if d.floor[monster[i].x-1][monster[i].y] == "." {
+					d.floor[monster[i].x][monster[i].y] = "."
+					monster[i].x--
+					d.floor[monster[i].x][monster[i].y] = "M"
+				}
+			}
+			
+		} 	
+		
+		if isNear(laura, monster[i]) {
+			if laura.y > monster[i].y {
+				if d.floor[monster[i].x][monster[i].y+1] == "." {
+					d.floor[monster[i].x][monster[i].y] = "."
+					monster[i].y++
+					d.floor[monster[i].x][monster[i].y] = "M"
+				}
+			} else {
+				if d.floor[monster[i].x][monster[i].y-1] == "." {
+					d.floor[monster[i].x][monster[i].y] = "."
+					monster[i].y--
+					d.floor[monster[i].x][monster[i].y] = "M"
+				}
+			}
+			continue
+		}
+
+		randPath := (rand.Int() % 4)
+		if randPath == 0 {
 			if d.floor[monster[i].x+1][monster[i].y] == "." {
 				d.floor[monster[i].x][monster[i].y] = "."
 				monster[i].x++
 				d.floor[monster[i].x][monster[i].y] = "M"
 			}
-		} else {
+			continue
+		} 
+		if randPath == 1 {
 			if d.floor[monster[i].x-1][monster[i].y] == "." {
 				d.floor[monster[i].x][monster[i].y] = "."
 				monster[i].x--
 				d.floor[monster[i].x][monster[i].y] = "M"
 			}
+			continue
 		}
-		if laura.x > monster[i].y {
+		if randPath == 2 {
 			if d.floor[monster[i].x][monster[i].y+1] == "." {
 				d.floor[monster[i].x][monster[i].y] = "."
 				monster[i].y++
 				d.floor[monster[i].x][monster[i].y] = "M"
 			}
-		} else {
-			if d.floor[monster[i].x][monster[i].y-1] == "." {
-				d.floor[monster[i].x][monster[i].y] = "."
-				monster[i].y--
-				d.floor[monster[i].x][monster[i].y] = "M"
-			}
+			continue
+		} 
+		if d.floor[monster[i].x][monster[i].y-1] == "." {
+			d.floor[monster[i].x][monster[i].y] = "."
+			monster[i].y--
+			d.floor[monster[i].x][monster[i].y] = "M"
 		}
+		
 	}
 }
 
@@ -199,7 +259,7 @@ func quit(g * gocui.Gui, v * gocui.View) error {
 }
 
 func (l *Actor)ifAround(i string) bool {
-	if d.floor[l.y][l.x + 1] == i || d.floor[l.y][l.x - 1] == i || d.floor[l.y + 1][l.x] == i || d.floor[l.y - 1][l.x] == i{
+	if d.floor[l.x][l.y + 1] == i || d.floor[l.x][l.y - 1] == i || d.floor[l.x + 1][l.y] == i || d.floor[l.x - 1][l.y] == i{
 		return true
 	}
 	return false
@@ -213,11 +273,11 @@ func (l *Actor)moveW(g *gocui.Gui, v *gocui.View) error{
 		return nil
 	}
 
-	if d.floor[laura.y - 1][laura.x] == "." {
-		d.floor[laura.y][laura.x] = "."
-		l.y -= 1
+	if d.floor[laura.x - 1][laura.y] == "." {
+		d.floor[laura.x][laura.y] = "."
+		l.x -= 1
 	}
-	d.floor[laura.y][laura.x] = "@"
+	d.floor[laura.x][laura.y] = "@"
 	return nil
 }
 func (l *Actor)moveA(g *gocui.Gui, v *gocui.View) error{
@@ -227,11 +287,11 @@ func (l *Actor)moveA(g *gocui.Gui, v *gocui.View) error{
 		return nil
 	}
 
-	if d.floor[laura.y][laura.x - 1] == "." {
-		d.floor[laura.y][laura.x] = "."
-		l.x -= 1
+	if d.floor[laura.x][laura.y - 1] == "." {
+		d.floor[laura.x][laura.y] = "."
+		l.y -= 1
 	}
-	d.floor[laura.y][laura.x] = "@"
+	d.floor[laura.x][laura.y] = "@"
 	return nil
 }
 func (l *Actor)moveS(g *gocui.Gui, v *gocui.View) error{
@@ -241,11 +301,11 @@ func (l *Actor)moveS(g *gocui.Gui, v *gocui.View) error{
 		return nil
 	}
 
-	if d.floor[laura.y + 1][laura.x] == "." {
-		d.floor[laura.y][laura.x] = "."
-		l.y += 1
+	if d.floor[laura.x + 1][laura.y] == "." {
+		d.floor[laura.x][laura.y] = "."
+		l.x += 1
 	}
-	d.floor[laura.y][laura.x] = "@"
+	d.floor[laura.x][laura.y] = "@"
 	return nil
 }
 func (l *Actor)moveD(g *gocui.Gui, v *gocui.View) error{
@@ -255,11 +315,11 @@ func (l *Actor)moveD(g *gocui.Gui, v *gocui.View) error{
 		return nil
 	}
 
-	if d.floor[laura.y][laura.x + 1] == "." {
-		d.floor[laura.y][laura.x] = "."
-		l.x += 1
+	if d.floor[laura.x][laura.y + 1] == "." {
+		d.floor[laura.x][laura.y] = "."
+		l.y += 1
 	}
-	d.floor[laura.y][laura.x] = "@"
+	d.floor[laura.x][laura.y] = "@"
 	return nil
 }
 
