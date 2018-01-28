@@ -153,6 +153,7 @@ func layout(g *gocui.Gui) error {
 	for i := 0; i < MONSTERNUM; i++ {
 		if isNear(laura, monster[i]) {
 			fmt.Fprintln(v, "Would you like to attack? (space)")
+			break
 		}
 	}
 	return nil
@@ -309,6 +310,7 @@ func (l *Actor)ifAround(i string) bool {
 func (l *Actor)moveW(g *gocui.Gui, v *gocui.View) error{
 	if laura.ifAround("G") {
 		l.gold++
+		laura.health += 5
 		d.genFloor()
 		return nil
 	}
@@ -323,6 +325,7 @@ func (l *Actor)moveW(g *gocui.Gui, v *gocui.View) error{
 func (l *Actor)moveA(g *gocui.Gui, v *gocui.View) error{
 	if laura.ifAround("G") {
 		l.gold++
+		laura.health += 5
 		d.genFloor()
 		return nil
 	}
@@ -337,6 +340,7 @@ func (l *Actor)moveA(g *gocui.Gui, v *gocui.View) error{
 func (l *Actor)moveS(g *gocui.Gui, v *gocui.View) error{
 	if laura.ifAround("G") {
 		l.gold++
+		laura.health += 5
 		d.genFloor()
 		return nil
 	}
@@ -351,6 +355,7 @@ func (l *Actor)moveS(g *gocui.Gui, v *gocui.View) error{
 func (l *Actor)moveD(g *gocui.Gui, v *gocui.View) error{
 	if laura.ifAround("G") {
 		l.gold++
+		laura.health += 5
 		d.genFloor()
 		return nil
 	}
