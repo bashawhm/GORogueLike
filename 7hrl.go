@@ -9,7 +9,7 @@ import (
 	"os"
 )
 const MONSTERNUM = 2
-const NEAR = 3
+const NEAR = 6
 
 type Actor struct {
 	x int
@@ -160,20 +160,20 @@ func layout(g *gocui.Gui) error {
 }
 
 func isNear(a Actor, b Actor) bool {
-	if (a.y <= b.y) && (a.y + NEAR + 3 >= b.y) {
-		if (a.x <= b.x) && (a.x + NEAR + 3 >= b.x) || (a.x >= b.x) && (a.x - (NEAR + 3) <= b.x){
+	if (a.y <= b.y) && (a.y + NEAR >= b.y) {
+		if (a.x <= b.x) && (a.x + NEAR >= b.x) || (a.x >= b.x) && (a.x - (NEAR) <= b.x){
 			return true
 		} 
-	} else if (a.y >= b.y) && (a.y - (NEAR + 3) <= b.y) {
-		if (a.x <= b.x) && (a.x + NEAR + 3 >= b.x) || (a.x >= b.x) && (a.x - (NEAR + 3) <= b.x) {
+	} else if (a.y >= b.y) && (a.y - (NEAR) <= b.y) {
+		if (a.x <= b.x) && (a.x + NEAR >= b.x) || (a.x >= b.x) && (a.x - (NEAR) <= b.x) {
 			return true
 		}
-	} else if (a.x <= b.x) && (a.x + NEAR + 3 >= b.x) {
-		if (a.y <= b.y) && (a.y + NEAR + 3 >= b.y) || (a.y >= b.y) && (a.y - (NEAR + 3) <= b.y) {
+	} else if (a.x <= b.x) && (a.x + NEAR >= b.x) {
+		if (a.y <= b.y) && (a.y + NEAR >= b.y) || (a.y >= b.y) && (a.y - (NEAR) <= b.y) {
 			return true
 		}
-	} else if (a.x >= b.x) && (a.x - (NEAR + 3) <= b.x) {
-		if (a.y <= b.y) && (a.y + NEAR + 3 >= b.y) || (a.y >= b.y) && (a.y - (NEAR + 3) <= b.y) {
+	} else if (a.x >= b.x) && (a.x - (NEAR) <= b.x) {
+		if (a.y <= b.y) && (a.y + NEAR >= b.y) || (a.y >= b.y) && (a.y - (NEAR) <= b.y) {
 			return true
 		}
 	}
@@ -186,8 +186,11 @@ func MonsterAI(){
 			continue
 		}
 
+
+		//Attack you
 		if isNear(laura, monster[i]) {
-			laura.health -= monster[i].attack
+			attack := (rand.Int() % monster[i].attack + 1)
+			laura.health -= attack
 			if laura.health <= 0 {
 				laura.alive = false
 			}
