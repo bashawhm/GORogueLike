@@ -16,8 +16,8 @@ type Actor struct {
 	y int
 	gold uint16
 	alive bool
-	health uint16
-	attack uint16
+	health int
+	attack int
 }
 
 type Dungeon struct {
@@ -33,6 +33,14 @@ var laura Actor = Actor{x: 1, y: 1, gold: 0, alive: true, health: 10, attack: 5}
 var monster [MONSTERNUM]Actor
 
 
+func spawnMob(){
+	for i := 0; i < MONSTERNUM; i++ {
+		monster[i].alive = true
+		monster[i].health = 2
+		monster[i].attack = 4
+	}
+}
+
 func (d *Dungeon)printFloor(g *gocui.Gui, v *gocui.View){
 	for i := 0; i < d.floorVert; i++ {
 		for j := 0; j < d.floorHoriz; j++ {
@@ -43,6 +51,7 @@ func (d *Dungeon)printFloor(g *gocui.Gui, v *gocui.View){
 	}
 }
 func (d *Dungeon)genFloor() {
+	spawnMob()
 	laura.x = 1
 	laura.y = 1
 	d.floorHoriz = 10 + (rand.Int()%20)
@@ -98,11 +107,7 @@ func (d *Dungeon)genFloor() {
 func main(){
 	rand.Seed(time.Now().UnixNano())
 	d.genFloor()
-	for i := 0; i < MONSTERNUM; i++ {
-		monster[i].alive = true
-		monster[i].health = 4
-		monster[i].attack = 4
-	}
+	spawnMob()
 
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
@@ -131,7 +136,12 @@ func layout(g *gocui.Gui) error {
 	}
 	if laura.gold == 7 {
 		g.Close()
-		fmt.Println("You've got your golden toilet back!!!\n")
+		fmt.Println("You melt down all the gold pieces into a new Golden Toilet\nYou've got your Golden Toilet back!!!\n")
+		os.Exit(1)
+	}
+	if !laura.alive {
+		g.Close()
+		fmt.Println("You Failed!\nYour toilet is no more")
 		os.Exit(1)
 	}
 	v.Clear()
@@ -140,6 +150,11 @@ func layout(g *gocui.Gui) error {
 	d.printFloor(g, v)
 	fmt.Fprintln(v, "\nGold:", laura.gold)
 	fmt.Fprintln(v, "Health:", laura.health)
+	for i := 0; i < MONSTERNUM; i++ {
+		if isNear(laura, monster[i]) {
+			fmt.Fprintln(v, "Would you like to attack? (space)")
+		}
+	}
 	return nil
 }
 
@@ -166,6 +181,9 @@ func isNear(a Actor, b Actor) bool {
 
 func MonsterAI(){
 	for i := 0; i < MONSTERNUM; i++ {
+		if !monster[i].alive {
+			continue
+		}
 		if isNear(laura, monster[i]) {
 			if laura.x > monster[i].x {
 				if d.floor[monster[i].x+1][monster[i].y] == "." {
@@ -234,7 +252,6 @@ func MonsterAI(){
 	}
 }
 
-
 func keybindings(g * gocui.Gui) error {
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 		return err
@@ -251,6 +268,29 @@ func keybindings(g * gocui.Gui) error {
 	if err := g.SetKeybinding("", gocui.KeyArrowRight, gocui.ModNone, laura.moveD); err != nil {
 		return err
 	}
+	if err := g.SetKeybinding("", gocui.KeySpace, gocui.ModNone, attack); err != nil {
+		return err
+	}
+	return nil
+}
+
+func attack(g *gocui.Gui, v *gocui.View) error {
+	for i := 0;i < MONSTERNUM; i++ {
+		if isNear(laura, monster[i]) && monster[i].alive {
+			monster[i].health -= laura.attack
+			if monster[i].health <= 0 {
+				monster[i].alive = false
+				d.floor[monster[i].x][monster[i].y] = "."
+			}
+			laura.health -= monster[i].attack
+			
+			if laura.health <= 0 {
+				laura.alive = false
+			}
+			break
+		}
+	}
+
 	return nil
 }
 
