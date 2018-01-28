@@ -9,7 +9,7 @@ import (
 	"os"
 )
 const MONSTERNUM = 2
-const NEAR = 5
+const NEAR = 3
 
 type Actor struct {
 	x int
@@ -29,7 +29,7 @@ type Dungeon struct {
 }
 
 var d Dungeon
-var laura Actor = Actor{x: 1, y: 1, gold: 0, alive: true, health: 10, attack: 5}
+var laura Actor = Actor{x: 1, y: 1, gold: 0, alive: true, health: 15, attack: 5}
 var monster [MONSTERNUM]Actor
 
 
@@ -37,7 +37,7 @@ func spawnMob(){
 	for i := 0; i < MONSTERNUM; i++ {
 		monster[i].alive = true
 		monster[i].health = 2
-		monster[i].attack = 4
+		monster[i].attack = 3
 	}
 }
 
@@ -160,20 +160,20 @@ func layout(g *gocui.Gui) error {
 }
 
 func isNear(a Actor, b Actor) bool {
-	if (a.y <= b.y) && (a.y + NEAR >= b.y) {
-		if (a.x <= b.x) && (a.x + NEAR >= b.x) || (a.x >= b.x) && (a.x - NEAR <= b.x){
+	if (a.y <= b.y) && (a.y + NEAR + 3 >= b.y) {
+		if (a.x <= b.x) && (a.x + NEAR + 3 >= b.x) || (a.x >= b.x) && (a.x - (NEAR + 3) <= b.x){
 			return true
 		} 
-	} else if (a.y >= b.y) && (a.y - NEAR <= b.y) {
-		if (a.x <= b.x) && (a.x + NEAR >= b.x) || (a.x >= b.x) && (a.x - NEAR <= b.x) {
+	} else if (a.y >= b.y) && (a.y - (NEAR + 3) <= b.y) {
+		if (a.x <= b.x) && (a.x + NEAR + 3 >= b.x) || (a.x >= b.x) && (a.x - (NEAR + 3) <= b.x) {
 			return true
 		}
-	} else if (a.x <= b.x) && (a.x + NEAR >= b.x) {
-		if (a.y <= b.y) && (a.y + NEAR >= b.y) || (a.y >= b.y) && (a.y - NEAR <= b.y) {
+	} else if (a.x <= b.x) && (a.x + NEAR + 3 >= b.x) {
+		if (a.y <= b.y) && (a.y + NEAR + 3 >= b.y) || (a.y >= b.y) && (a.y - (NEAR + 3) <= b.y) {
 			return true
 		}
-	} else if (a.x >= b.x) && (a.x - NEAR <= b.x) {
-		if (a.y <= b.y) && (a.y + NEAR >= b.y) || (a.y >= b.y) && (a.y - NEAR <= b.y) {
+	} else if (a.x >= b.x) && (a.x - (NEAR + 3) <= b.x) {
+		if (a.y <= b.y) && (a.y + NEAR + 3 >= b.y) || (a.y >= b.y) && (a.y - (NEAR + 3) <= b.y) {
 			return true
 		}
 	}
@@ -185,6 +185,14 @@ func MonsterAI(){
 		if !monster[i].alive {
 			continue
 		}
+
+		if isNear(laura, monster[i]) {
+			laura.health -= monster[i].attack
+			if laura.health <= 0 {
+				laura.alive = false
+			}
+		}
+
 		if isNear(laura, monster[i]) {
 			if laura.x > monster[i].x {
 				if d.floor[monster[i].x+1][monster[i].y] == "." {
@@ -283,7 +291,6 @@ func attack(g *gocui.Gui, v *gocui.View) error {
 				monster[i].alive = false
 				d.floor[monster[i].x][monster[i].y] = "."
 			}
-			laura.health -= monster[i].attack
 			
 			if laura.health <= 0 {
 				laura.alive = false
